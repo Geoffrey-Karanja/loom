@@ -7,14 +7,28 @@ import {
 } from '../services/memoryService.js'
 
 const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' })
-const MODEL  = process.env.OLLAMA_MODEL || 'llama3.2'
+const MODEL  = process.env.OLLAMA_MODEL || 'llama3.2:1b'
+
+// Check if Ollama is available
+async function isOllamaOnline() {
+  try {
+    await ollama.list()
+    return true
+  } catch {
+    return false
+  }
+}
+
+const OFFLINE_MSG = "The Weaver is sleeping on the live demo — Ollama requires more RAM than free hosting provides. Clone the repo and run locally to unlock full AI features: github.com/Geoffrey-Karanja/loom"
 
 export async function weaverRouter(app) {
 
-  // Analyze text
   app.post('/analyze', async (req, reply) => {
     const { text, nodeId } = req.body
     if (!text) return reply.code(400).send({ error: 'text required' })
+
+    const online = await isOllamaOnline()
+    if (!online) return { objects: [], connections: [], summary: OFFLINE_MSG, offline: true }
 
     const prompt = `Extract structured objects from this text. Return ONLY JSON:
 Text: "${text.slice(0, 600)}"
@@ -44,8 +58,6 @@ Text: "${text.slice(0, 600)}"
           node.updatedAt = new Date().toISOString()
           await db.write()
           result.savedObjects = newObjects
-
-          // Save insight to memory
           if (result.summary) {
             await saveMemory('insight',
               `Node "${node.title}": ${result.summary}`,
@@ -57,12 +69,14 @@ Text: "${text.slice(0, 600)}"
       return result
     } catch (err) {
       app.log.error(err)
-      return { objects: [], connections: [], summary: 'Weaver offline', error: err.message }
+      return { objects: [], connections: [], summary: 'Weaver error', error: err.message }
     }
   })
 
-  // Resonate
   app.post('/resonate', async (req, reply) => {
+    const online = await isOllamaOnline()
+    if (!online) return { insights: [{ type: 'connection', message: OFFLINE_MSG, relatedTitles: [] }] }
+
     const db = getDB()
     const nodes = db.data.nodes.slice(-6)
     if (nodes.length < 2) return { insights: [] }
@@ -84,20 +98,19 @@ ${context}
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) return { insights: [] }
       const result = JSON.parse(jsonMatch[0])
-
-      // Save insights to memory
       for (const insight of result.insights || []) {
         await saveMemory('insight', insight.message, { type: insight.type })
       }
-
       return result
     } catch (err) {
       return { insights: [], error: err.message }
     }
   })
 
-  // Autolink
   app.post('/autolink', async (req, reply) => {
+    const online = await isOllamaOnline()
+    if (!online) return { linked: [], offline: true }
+
     const db = getDB()
     const nodes = db.data.nodes
     if (nodes.length < 2) return { linked: [] }
@@ -144,16 +157,27 @@ ${JSON.stringify(context)}
     }
   })
 
-  // ── Chat with memory ─────────────────────────────────────────────────────
   app.post('/chat', async (req, reply) => {
     const { message, history = [] } = req.body
     if (!message) return reply.code(400).send({ error: 'message required' })
 
+    reply.raw.setHeader('Content-Type', 'text/event-stream')
+    reply.raw.setHeader('Cache-Control', 'no-cache')
+    reply.raw.setHeader('Connection', 'keep-alive')
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*')
+
+    const online = await isOllamaOnline()
+    if (!online) {
+      reply.raw.write(`data: ${JSON.stringify({ word: OFFLINE_MSG, done: true })}\n\n`)
+      reply.raw.end()
+      return
+    }
+
     const db = getDB()
     const nodes = db.data.nodes
     const edges = db.data.edges
+    const memoryContext = getMemoryContext(12)
 
-    // Workspace context
     const workspaceContext = nodes.length > 0
       ? nodes.map(n => {
           const content = n.content?.replace(/<[^>]*>/g, '').slice(0, 200)
@@ -170,20 +194,11 @@ ${JSON.stringify(context)}
         }).join(', ')
       : 'none'
 
-    // Memory context
-    const memoryContext = getMemoryContext(12)
-
-    const systemPrompt = `You are the Weaver, Loom's AI. You have a persistent memory of past conversations and insights.
-
-MEMORY (what you remember from before):
-${memoryContext}
-
-CURRENT WORKSPACE:
-${workspaceContext}
-
+    const systemPrompt = `You are the Weaver, Loom's AI. You have persistent memory.
+MEMORY: ${memoryContext}
+WORKSPACE: ${workspaceContext}
 CONNECTIONS: ${edgeContext}
-
-Use your memory to give personalized, contextual responses. Reference past conversations when relevant. Be concise — 2-4 sentences unless more is needed.`
+Be concise — 2-4 sentences unless more is needed.`
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -191,24 +206,15 @@ Use your memory to give personalized, contextual responses. Reference past conve
       { role: 'user', content: message }
     ]
 
-    // Extract facts from user message
     await extractFacts(message)
-
-    reply.raw.setHeader('Content-Type', 'text/event-stream')
-    reply.raw.setHeader('Cache-Control', 'no-cache')
-    reply.raw.setHeader('Connection', 'keep-alive')
-    reply.raw.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
 
     try {
       const stream = await ollama.chat({
-        model: MODEL,
-        messages,
-        stream: true,
+        model: MODEL, messages, stream: true,
         options: { temperature: 0.7, num_predict: 400 }
       })
 
       let fullReply = ''
-
       for await (const chunk of stream) {
         const word = chunk.message?.content || ''
         if (word) {
@@ -217,9 +223,7 @@ Use your memory to give personalized, contextual responses. Reference past conve
         }
       }
 
-      // Save conversation to memory
       await saveConversationTurn(message, fullReply)
-
       reply.raw.write(`data: ${JSON.stringify({ done: true })}\n\n`)
       reply.raw.end()
     } catch (err) {
@@ -228,16 +232,18 @@ Use your memory to give personalized, contextual responses. Reference past conve
     }
   })
 
-  // ── Memory endpoints ─────────────────────────────────────────────────────
-  app.get('/memory', async () => {
-    return {
-      memories: getMemories(30),
-      total: getMemories(1000).length
-    }
-  })
+  app.get('/memory', async () => ({
+    memories: getMemories(30),
+    total: getMemories(1000).length
+  }))
 
   app.delete('/memory', async () => {
     await clearMemories()
     return { cleared: true }
+  })
+
+  app.get('/status', async () => {
+    const online = await isOllamaOnline()
+    return { online, model: MODEL, message: online ? 'Weaver online' : 'Weaver offline — Ollama not running' }
   })
 }
