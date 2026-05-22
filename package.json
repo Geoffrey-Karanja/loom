@@ -1,0 +1,24 @@
+{
+  "name": "loom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An Intelligent Thought Environment — infinite canvas, knowledge graph, and AI Weaver",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "start":   "bash scripts/start.sh",
+    "dev":     "concurrently \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:api": "npm run dev -w apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "knowledge-graph", "infinite-canvas", "ai", "ollama",
+    "notion-alternative", "workspace", "productivity", "local-first"
+  ],
+  "license": "MIT"
+}

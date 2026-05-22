@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+data/sqlite/*.db
+data/vectors/
+*.log
+.DS_Store
+data/sqlite/loom.json
