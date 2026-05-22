@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import MemoryPanel from './MemoryPanel.jsx'
+import { API_URL } from '../config.js'
 
-const API = 'http://localhost:4000/api'
+const API = API_URL
 
 export default function WeaverChat({ onClose }) {
   const [messages, setMessages] = useState([
@@ -11,6 +12,7 @@ export default function WeaverChat({ onClose }) {
   const [loading, setLoading] = useState(false)
   const [streamingText, setStreamingText] = useState('')
   const [showMemory, setShowMemory] = useState(false)
+  const [weaverOnline, setWeaverOnline] = useState(null)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -18,7 +20,14 @@ export default function WeaverChat({ onClose }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => {
+    inputRef.current?.focus()
+    // Check weaver status
+    fetch(`${API}/weaver/status`)
+      .then(r => r.json())
+      .then(d => setWeaverOnline(d.online))
+      .catch(() => setWeaverOnline(false))
+  }, [])
 
   const send = async () => {
     const text = input.trim()
@@ -62,7 +71,8 @@ export default function WeaverChat({ onClose }) {
       }
     } catch (err) {
       setMessages(prev => [...prev, {
-        role: 'assistant', content: 'Connection error. Is the API running?'
+        role: 'assistant',
+        content: 'Connection error. Is the API running?'
       }])
       setLoading(false)
       setStreamingText('')
@@ -101,7 +111,6 @@ export default function WeaverChat({ onClose }) {
           boxShadow: '0 24px 80px rgba(124,106,247,0.25)',
           overflow: 'hidden', pointerEvents: 'all'
         }}>
-
           {/* Header */}
           <div style={{
             padding: '12px 16px',
@@ -120,18 +129,21 @@ export default function WeaverChat({ onClose }) {
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', fontFamily: 'Syne, sans-serif' }}>
                 The Weaver
               </div>
-              <div style={{ fontSize: 10, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>
-                {loading ? '⟳ thinking...' : 'remembers everything · always on'}
+              <div style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace',
+                color: weaverOnline === false ? 'var(--coral)' : 'var(--accent)'
+              }}>
+                {loading ? '⟳ thinking...'
+                  : weaverOnline === false ? '● offline on demo — run locally for AI'
+                  : weaverOnline === true  ? '● online · remembers everything'
+                  : '● checking...'}
               </div>
             </div>
 
-            {/* Memory button */}
-            <button onClick={() => setShowMemory(true)} title="View memory" style={{
+            <button onClick={() => setShowMemory(true)} style={{
               background: 'none', border: '1px solid var(--border)',
               borderRadius: 6, color: 'var(--dim)',
               cursor: 'pointer', fontSize: 11,
-              padding: '3px 8px',
-              fontFamily: 'Syne, sans-serif',
+              padding: '3px 8px', fontFamily: 'Syne, sans-serif',
               transition: 'all 0.15s'
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
@@ -141,13 +153,28 @@ export default function WeaverChat({ onClose }) {
             <button onClick={onClose} style={{
               background: 'none', border: 'none',
               color: 'var(--dim)', cursor: 'pointer',
-              fontSize: 16, padding: '2px 6px',
-              transition: 'color 0.15s'
+              fontSize: 16, padding: '2px 6px', transition: 'color 0.15s'
             }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--dim)'}
             >✕</button>
           </div>
+
+          {/* Offline banner */}
+          {weaverOnline === false && (
+            <div style={{
+              padding: '8px 14px',
+              background: 'rgba(248,113,113,0.08)',
+              borderBottom: '1px solid rgba(248,113,113,0.2)',
+              fontSize: 11, color: 'var(--coral)', lineHeight: 1.5
+            }}>
+              AI is offline on the live demo. Canvas, graph, timeline, map and all other features work fully.
+              <a href="https://github.com/Geoffrey-Karanja/loom" target="_blank"
+                style={{ color: 'var(--accent)', marginLeft: 4 }}>
+                Run locally for full AI →
+              </a>
+            </div>
+          )}
 
           {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px' }}>

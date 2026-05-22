@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import axios from 'axios'
+import { API_URL } from '../config.js'
 
-const API = 'http://localhost:4000/api'
+const API = API_URL
 
 export const useLoomStore = create((set, get) => ({
   nodes: [],
@@ -11,7 +12,7 @@ export const useLoomStore = create((set, get) => ({
   weaverInsights: [],
   weaverLoading: false,
 
-  setActiveView: (view) => set({ activeView: view }),
+  setActiveView:   (view) => set({ activeView: view }),
   setSelectedNode: (node) => set({ selectedNode: node }),
 
   fetchNodes: async () => {
@@ -57,9 +58,7 @@ export const useLoomStore = create((set, get) => ({
     set({ weaverLoading: true })
     try {
       const res = await axios.post(`${API}/weaver/analyze`, { text, nodeId })
-      if (res.data.savedObjects?.length) {
-        await get().fetchNodes()
-      }
+      if (res.data.savedObjects?.length) await get().fetchNodes()
       return res.data
     } finally {
       set({ weaverLoading: false })
@@ -80,12 +79,15 @@ export const useLoomStore = create((set, get) => ({
     set({ weaverLoading: true })
     try {
       const res = await axios.post(`${API}/weaver/autolink`, {})
-      if (res.data.linked?.length) {
-        await get().fetchGraph()
-      }
+      if (res.data.linked?.length) await get().fetchGraph()
       return res.data
     } finally {
       set({ weaverLoading: false })
     }
+  },
+
+  searchNodes: async (query) => {
+    const res = await axios.get(`${API}/search?q=${encodeURIComponent(query)}`)
+    return res.data
   }
 }))

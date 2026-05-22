@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { useLoomStore } from '../store/index.js'
 import axios from 'axios'
 
-const API = 'http://localhost:4000/api'
+import { API_URL } from '../config.js'
+const API = API_URL
 
 export default function InboxAlchemy({ onClose }) {
   const { createNode, fetchNodes } = useLoomStore()

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const API = 'http://localhost:4000/api'
+import { API_URL } from '../config.js'
+const API = API_URL
 
 const PRIORITY_META = {
   low:    { color: '#2dd4bf', label: 'Low',    icon: '🟢' },
