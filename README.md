@@ -2,12 +2,15 @@
 
 > An Intelligent Thought Environment. Not a better Notion — a different category of tool.
 
-Loom is a local-first, AI-powered workspace that combines an infinite canvas, a living knowledge graph, geospatial and temporal views, and an AI Weaver that thinks alongside you — all running free on your machine.
+**[🚀 Live Demo](https://loom-web-chi.vercel.app)** · **[API](https://loom-api-dabe.onrender.com/health)** · **[GitHub](https://github.com/Geoffrey-Karanja/loom)**
 
-![Loom Canvas](https://img.shields.io/badge/status-active-brightgreen)
+> ⚠️ AI features (Weaver) are offline on the live demo — Ollama requires more RAM than free hosting allows. Clone and run locally for the full experience.
+
+![Loom Canvas](https://img.shields.io/badge/status-live-brightgreen)
 ![Stack](https://img.shields.io/badge/stack-React%20%2B%20Node.js%20%2B%20Ollama-purple)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Cost](https://img.shields.io/badge/cost-100%25%20free-teal)
+![Demo](https://img.shields.io/badge/demo-live-brightgreen)
 
 ---
 
@@ -36,7 +39,7 @@ Loom is a local-first, AI-powered workspace that combines an infinite canvas, a 
 Pan, zoom, and spatially arrange nodes. Every node is anything — a document, task, idea, or database. Double-click to create. Right-click for options. Connect nodes with curved edges.
 
 ### ◈ Knowledge Graph
-A live, force-directed graph of everything you've created. 5 layout modes. Click any node to inspect its connections, Weaver objects, and stats. AI auto-detects meaningful links between nodes.
+A live, force-directed graph of everything you have created. 5 layout modes. Click any node to inspect its connections, Weaver objects, and stats. AI auto-detects meaningful links between nodes.
 
 ### ⊶ Timeline
 Every node time-anchored on a zoomable vertical timeline. Filter by type. Click to jump to canvas.
@@ -51,10 +54,10 @@ A persistent, workspace-aware AI that:
 - **Auto-links** — draws meaningful connections between nodes
 - **Chats** — answers questions about your workspace with full context
 - **Remembers** — maintains memory of past conversations and facts across sessions
-- Runs on **Ollama** (local, free, offline)
+- Runs on **Ollama** (local, free, offline — no API key ever)
 
 ### ⌬ Protocol Engine
-Launch adaptive AI playbooks: Project Launch, Weekly Review, Crisis Response, Research Sprint, Decision Record. One click spawns all nodes, pre-filled and Weaver-analyzed.
+Launch adaptive AI playbooks: Project Launch, Weekly Review, Crisis Response, Research Sprint, Decision Record. One click spawns all nodes pre-filled and Weaver-analyzed.
 
 ### ⊹ Inbox Alchemy
 Paste any raw text — email, Slack message, meeting notes. The Weaver extracts structure instantly. One click saves tasks, decisions, risks, and insights as separate nodes.
@@ -66,40 +69,14 @@ Set reminders with due dates, repeat schedules, and priority levels. Browser not
 8 pre-filled templates: Meeting Notes, Bug Report, Feature Request, Task List, Decision Record, User Research, Weekly Plan, Brainstorm.
 
 ### ↓ Export
-Export your entire workspace as JSON (full backup), Markdown (readable, Obsidian-compatible), or CSV (spreadsheet-ready).
+Export your entire workspace as JSON (full backup), Markdown (Obsidian-compatible), or CSV (spreadsheet-ready).
 
 ### Real-time Collaboration
 P2P sync via Yjs + WebRTC. No server needed. Open two browser tabs to see it work.
 
 ---
 
-## Stack
-
-**All free. All local. All yours.**
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, Vite, TipTap, Cytoscape.js, Leaflet.js, D3 |
-| Canvas | Custom infinite canvas (no tldraw dependency) |
-| Backend | Fastify, Node.js |
-| Database | LowDB (local JSON, zero setup) |
-| AI | Ollama + llama3.2 (local, offline, free) |
-| Graph | Cytoscape.js + custom algorithms |
-| Collab | Yjs + WebRTC (P2P, no server) |
-| Map | Leaflet + OpenStreetMap (free tiles) |
-
----
-
-## Requirements
-
-- Node.js 18+
-- npm 9+
-- [Ollama](https://ollama.com) (for AI features)
-- WSL2 Ubuntu (recommended) or any Linux/Mac
-
----
-
-## Quick Start
+## Quick Start (Full AI experience)
 
 ```bash
 # 1. Clone
@@ -109,19 +86,44 @@ cd loom
 # 2. Install dependencies
 npm install
 
-# 3. Install Ollama + pull model
+# 3. Install Ollama
 curl -fsSL https://ollama.com/install.sh | sh
+
+# 4. Pull the model (fast, 1B params)
 ollama pull llama3.2:1b
 
-# 4. Start API
-cd apps/api && node src/index.js &
-
-# 5. Start frontend
-cd apps/web && npm run dev
+# 5. Start everything
+bash scripts/start.sh
 
 # 6. Open browser
 # http://localhost:3000
 ```
+
+---
+
+## Stack
+
+**All free. All local. All yours.**
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, TipTap, Cytoscape.js, Leaflet.js |
+| Backend | Fastify, Node.js |
+| Database | LowDB (local JSON, zero setup) |
+| AI | Ollama + llama3.2:1b (local, offline, free) |
+| Graph | Cytoscape.js + custom algorithms |
+| Collab | Yjs + WebRTC (P2P, no server) |
+| Map | Leaflet + OpenStreetMap (free tiles) |
+| Hosting | Vercel (frontend) + Render (API) |
+
+---
+
+## Requirements
+
+- Node.js 18+
+- npm 9+
+- [Ollama](https://ollama.com) (for AI features)
+- WSL2 Ubuntu / Linux / macOS
 
 ---
 
@@ -139,12 +141,13 @@ cd apps/web && npm run dev
 | `Right-click node` | Context menu |
 | `Scroll` | Zoom |
 | `Alt+Drag` | Pan |
+| `Pinch` | Zoom (touch) |
 
 ---
 
 ## Project Structureloom/
 ├── apps/
-│   ├── api/          # Fastify backend
+│   ├── api/                  # Fastify backend
 │   │   └── src/
 │   │       ├── ai/           # Ollama client + prompt builder
 │   │       ├── db/           # LowDB database
@@ -153,9 +156,9 @@ cd apps/web && npm run dev
 │   │       ├── routes/       # API routes
 │   │       ├── services/     # Business logic
 │   │       └── ws/           # WebSocket sync
-│   └── web/          # React frontend
+│   └── web/                  # React frontend
 │       └── src/
-│           ├── ai/           # Weaver chat, orb, inbox
+│           ├── ai/           # Weaver chat, orb, inbox, memory
 │           ├── canvas/       # Infinite canvas + nodes
 │           ├── collab/       # P2P collaboration
 │           ├── components/   # Shared UI components
@@ -167,9 +170,9 @@ cd apps/web && npm run dev
 │           ├── store/        # Zustand global state
 │           ├── styles/       # Global CSS
 │           └── timeline/     # Timeline view
-├── data/             # Local database (gitignored)
-├── docs/             # Documentation
-└── packages/         # Shared packages
+├── data/                     # Local database (gitignored)
+├── docs/                     # Documentation
+└── packages/                 # Shared packages
 ---
 
 ## Roadmap
@@ -181,6 +184,7 @@ cd apps/web && npm run dev
 - [ ] Electron desktop app
 - [ ] Mobile app
 - [ ] Plugin system
+- [ ] Hosted Ollama (so AI works on the live demo)
 
 ---
 
@@ -194,6 +198,12 @@ The AI is not a chatbot bolted on. It is the nervous system.
 
 ---
 
+## Self-hosting
+
+Loom is designed to run on your machine. Your data never leaves your computer. The live demo uses a shared database — for real use, clone and run locally.
+
+---
+
 ## License
 
 MIT — free forever, for everyone.
@@ -204,4 +214,4 @@ MIT — free forever, for everyone.
 
 Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-Built with ❤️ on WSL2 Ubuntu. Zero budget. Maximum ambition.
+Built with zero budget. Maximum ambition.
