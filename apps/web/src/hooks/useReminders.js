@@ -1,12 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react'
 import axios from 'axios'
+import { API_URL } from '../config.js'
 
-const API = 'http://localhost:4000/api'
+const API = API_URL
 
 export function useReminders(onFire) {
   const permissionRef = useRef('default')
 
-  // Request notification permission once
   useEffect(() => {
     if ('Notification' in window) {
       Notification.requestPermission().then(p => {
@@ -22,19 +22,14 @@ export function useReminders(onFire) {
     if (permissionRef.current === 'granted') {
       const n = new Notification(`${priority} ${reminder.title}`, {
         body: reminder.note || 'Task reminder from Loom',
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
         tag: reminder.id,
         requireInteraction: reminder.priority === 'high'
       })
       n.onclick = () => { window.focus(); n.close() }
     }
-
-    // Also trigger in-app alert
     onFire?.(reminder)
   }, [onFire])
 
-  // Poll every 30 seconds for due reminders
   useEffect(() => {
     const check = async () => {
       try {
@@ -45,8 +40,7 @@ export function useReminders(onFire) {
         }
       } catch {}
     }
-
-    check() // check immediately on mount
+    check()
     const interval = setInterval(check, 30000)
     return () => clearInterval(interval)
   }, [fireNotification])

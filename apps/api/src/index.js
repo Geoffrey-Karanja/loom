@@ -22,9 +22,12 @@ const app = Fastify({
 })
 
 await app.register(cors, {
-  origin: 'http://localhost:3000',
-  methods: ['GET','POST','PATCH','DELETE','OPTIONS']
+  origin: true,
+  methods: ['GET','POST','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 })
+
 await app.register(websocket)
 
 app.addHook('onRequest', async (req, reply) => {
@@ -62,9 +65,11 @@ app.get('/health', async () => ({
   uptime: process.uptime()
 }))
 
+const port = parseInt(process.env.PORT || '4000')
+
 try {
-  await app.listen({ port: process.env.PORT || 4000, host: '0.0.0.0' })
-  console.log('🌿 Loom API running on http://localhost:4000')
+  await app.listen({ port, host: '0.0.0.0' })
+  console.log(`🌿 Loom API running on port ${port}`)
 } catch (err) {
   app.log.error(err)
   process.exit(1)

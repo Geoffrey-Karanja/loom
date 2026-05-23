@@ -16,7 +16,8 @@ import ShortcutHint        from './components/ShortcutHint.jsx'
 import ReminderAlert       from './components/ReminderAlert.jsx'
 import axios               from 'axios'
 
-const API = 'http://localhost:4000/api'
+import { API_URL } from './config.js'
+const API = API_URL
 
 export default function App() {
   const { activeView, setActiveView, fetchNodes, fetchGraph } = useLoomStore()

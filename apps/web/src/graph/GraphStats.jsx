@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import { API_URL } from '../config.js'
 
-const API = 'http://localhost:4000/api'
+const API = API_URL
 
 const TYPE_COLORS = {
   document: '#7c6af7', task: '#2dd4bf',
@@ -75,8 +76,6 @@ export default function GraphStats({ onClose }) {
         boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
         display: 'flex', flexDirection: 'column'
       }}>
-
-        {/* Header */}
         <div style={{
           padding: '20px 24px',
           borderBottom: '1px solid var(--border)',
@@ -95,7 +94,6 @@ export default function GraphStats({ onClose }) {
             </div>
           </div>
 
-          {/* Health score */}
           <div style={{ textAlign: 'center' }}>
             <div style={{
               width: 60, height: 60, borderRadius: '50%',
@@ -118,48 +116,33 @@ export default function GraphStats({ onClose }) {
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-
-          {/* Metrics grid */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 10, marginBottom: 20
           }}>
             {metrics.map(m => (
               <div key={m.label} style={{
-                padding: '14px 16px',
-                background: 'var(--muted)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
+                padding: '14px 16px', background: 'var(--muted)',
+                border: '1px solid var(--border)', borderRadius: 10,
                 borderTop: `2px solid ${m.color}`
               }}>
                 <div style={{
-                  fontSize: 22, fontWeight: 700,
-                  color: m.color, fontFamily: 'JetBrains Mono, monospace',
-                  marginBottom: 4
+                  fontSize: 22, fontWeight: 700, color: m.color,
+                  fontFamily: 'JetBrains Mono, monospace', marginBottom: 4
                 }}>{m.value}</div>
                 <div style={{ fontSize: 11, color: 'var(--dim)' }}>{m.label}</div>
               </div>
             ))}
           </div>
 
-          {/* Density bar */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              marginBottom: 6
-            }}>
-              <span style={{ fontSize: 11, color: 'var(--dim)', fontWeight: 600 }}>
-                Graph Density
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--dim)', fontWeight: 600 }}>Graph Density</span>
+              <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>
+                {densityPct.toFixed(1)}%
               </span>
-              <span style={{
-                fontSize: 11, color: 'var(--accent)',
-                fontFamily: 'JetBrains Mono, monospace'
-              }}>{densityPct.toFixed(1)}%</span>
             </div>
-            <div style={{
-              height: 6, background: 'var(--muted)',
-              borderRadius: 3, overflow: 'hidden'
-            }}>
+            <div style={{ height: 6, background: 'var(--muted)', borderRadius: 3, overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: 3,
                 width: `${Math.max(densityPct, 2)}%`,
@@ -167,101 +150,68 @@ export default function GraphStats({ onClose }) {
                 transition: 'width 0.8s ease'
               }} />
             </div>
-            <div style={{
-              fontSize: 10, color: 'var(--dim)', marginTop: 4
-            }}>
-              {densityPct < 10
-                ? 'Sparse — add more connections between nodes'
-                : densityPct < 40
-                ? 'Growing — good structure emerging'
+            <div style={{ fontSize: 10, color: 'var(--dim)', marginTop: 4 }}>
+              {densityPct < 10 ? 'Sparse — add more connections'
+                : densityPct < 40 ? 'Growing — good structure emerging'
                 : 'Dense — rich knowledge web'}
             </div>
           </div>
 
-          {/* Hub nodes */}
           {stats.hubs?.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <div style={{
                 fontSize: 11, color: 'var(--dim)', fontWeight: 600,
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-                marginBottom: 10
+                letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10
               }}>Hub Nodes — most connected</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {stats.hubs.map((hub, i) => (
-                  <div key={hub.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '8px 12px',
-                    background: 'var(--muted)',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)'
-                  }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: '50%',
-                      background: `rgba(124,106,247,${0.4 - i * 0.1})`,
-                      border: '1px solid var(--accent)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, color: 'var(--accent)', fontWeight: 700,
-                      flexShrink: 0
-                    }}>#{i + 1}</div>
-                    <div style={{ flex: 1, fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
-                      {hub.title}
-                    </div>
-                    <div style={{
-                      fontSize: 11, color: 'var(--accent)',
-                      fontFamily: 'JetBrains Mono, monospace'
-                    }}>{hub.degree} links</div>
+              {stats.hubs.map((hub, i) => (
+                <div key={hub.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '8px 12px', background: 'var(--muted)',
+                  borderRadius: 8, border: '1px solid var(--border)', marginBottom: 6
+                }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: `rgba(124,106,247,${0.4 - i * 0.1})`,
+                    border: '1px solid var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, color: 'var(--accent)', fontWeight: 700, flexShrink: 0
+                  }}>#{i+1}</div>
+                  <div style={{ flex: 1, fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
+                    {hub.title}
                   </div>
-                ))}
-              </div>
+                  <div style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {hub.degree} links
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Warnings */}
           {stats.isolatedCount > 0 && (
             <div style={{
               padding: '12px 14px',
               background: 'rgba(248,113,113,0.08)',
               border: '1px solid rgba(248,113,113,0.3)',
-              borderRadius: 8, marginBottom: 12
+              borderRadius: 8
             }}>
-              <div style={{
-                fontSize: 12, color: 'var(--coral)',
-                fontWeight: 600, marginBottom: 4
-              }}>
+              <div style={{ fontSize: 12, color: 'var(--coral)', fontWeight: 600, marginBottom: 4 }}>
                 ⚠ {stats.isolatedCount} isolated node{stats.isolatedCount > 1 ? 's' : ''}
               </div>
               <div style={{ fontSize: 11, color: 'var(--dim)', lineHeight: 1.5 }}>
-                These nodes have no connections. Use AutoLink or manually connect them to strengthen your graph.
-              </div>
-            </div>
-          )}
-
-          {stats.nodeCount === 0 && (
-            <div style={{
-              padding: '12px 14px',
-              background: 'rgba(124,106,247,0.08)',
-              border: '1px solid rgba(124,106,247,0.2)',
-              borderRadius: 8
-            }}>
-              <div style={{ fontSize: 12, color: 'var(--accent)', lineHeight: 1.6 }}>
-                Your graph is empty. Create nodes on the Canvas and use AutoLink to start building your knowledge web.
+                These nodes have no connections. Use AutoLink to strengthen your graph.
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div style={{
-          padding: '12px 24px',
-          borderTop: '1px solid var(--border)',
+          padding: '12px 24px', borderTop: '1px solid var(--border)',
           display: 'flex', justifyContent: 'flex-end'
         }}>
           <button onClick={onClose} style={{
-            padding: '6px 16px',
-            background: 'var(--muted)',
-            border: '1px solid var(--border)',
-            borderRadius: 6, color: 'var(--dim)',
-            cursor: 'pointer', fontSize: 12,
+            padding: '6px 16px', background: 'var(--muted)',
+            border: '1px solid var(--border)', borderRadius: 6,
+            color: 'var(--dim)', cursor: 'pointer', fontSize: 12,
             fontFamily: 'Syne, sans-serif'
           }}>Close</button>
         </div>
