@@ -21,11 +21,13 @@ const app = Fastify({
   requestTimeout:    120000
 })
 
+// Wildcard CORS — fixes all origin issues
 await app.register(cors, {
-  origin: true,
+  origin: '*',
   methods: ['GET','POST','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 })
 
 await app.register(websocket)
